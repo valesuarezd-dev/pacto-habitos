@@ -1,0 +1,7 @@
+{
+  "name": "pacto-de-habitos",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Pacto de hábitos para dos, con camino de regalos y castigos."
+}
