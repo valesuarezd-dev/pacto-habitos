@@ -95,6 +95,7 @@ function migrate(s) {
 let state = null;
 let version = 0;
 let mode = 'remote';
+let localReason = '';
 let me = null;
 let queue = Promise.resolve();
 let saving = 0;
@@ -234,14 +235,19 @@ async function load() {
   try {
     const r = await fetch(API, { headers: pinHeaders(), cache: 'no-store' });
     if (r.status === 401) { askPin(); return false; }
-    if (!r.ok) throw new Error(`HTTP ${r.status}`);
+    if (!r.ok) {
+      let msg = '';
+      try { msg = (await r.json()).message || ''; } catch { /* no era JSON */ }
+      throw new Error(msg || `La API respondió ${r.status}.`);
+    }
     const data = await r.json();
     mode = 'remote';
     state = migrate(data.state);
     version = Number(data.version) || 0;
     setSync('ok');
-  } catch {
+  } catch (e) {
     mode = 'local';
+    localReason = location.protocol === 'file:' ? '' : e?.message || '';
     let saved = null;
     try { saved = JSON.parse(lsGet(K.state) || 'null'); } catch { saved = null; }
     state = migrate(saved);
@@ -383,6 +389,7 @@ function render() {
   $('#title').textContent = state.title;
   $('#couple').textContent = `${nameOf('a')} y ${nameOf('b')}`;
   $('#local-banner').hidden = mode !== 'local';
+  $('#local-reason').textContent = localReason ? `Motivo: ${localReason}` : '';
   renderMe();
   renderPaths();
   renderHabits();

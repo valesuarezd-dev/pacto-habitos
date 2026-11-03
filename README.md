@@ -8,7 +8,8 @@ Página para seguir hábitos en pareja, con un camino de regalos que se van poni
 index.html      la página
 styles.css      los estilos (modo claro y oscuro)
 app.js          toda la lógica: hábitos, rachas, regalos y castigos
-api/state.js    función de Vercel que guarda los datos compartidos
+api/state.js    función de Vercel que guarda los datos compartidos (Supabase o Upstash)
+supabase.sql    crea la tabla si usas Supabase
 package.json
 .gitignore
 ```
@@ -19,9 +20,13 @@ No hay que instalar nada ni compilar nada.
 
 1. **GitHub**: crea un repositorio nuevo (puede ser privado) y sube todos los archivos tal cual, respetando la carpeta `api/`. Desde la web de GitHub sirve “Add file → Upload files” y arrastrar la carpeta completa.
 2. **Vercel**: entra a vercel.com, “Add New → Project”, importa el repositorio y aprieta “Deploy”. No cambies ninguna opción (Framework: Other).
-3. **Base de datos** (para que los dos vean lo mismo): en tu proyecto de Vercel ve a la pestaña **Storage**, crea una base **Upstash (Redis)** con el plan gratis y conéctala al proyecto. Vercel agrega solo las variables `KV_REST_API_URL` y `KV_REST_API_TOKEN`.
-4. Ve a **Deployments**, abre el último y elige **Redeploy** para que tome las variables.
+3. **Base de datos** (para que los dos vean lo mismo). Sirve cualquiera de estas dos:
+   - **Supabase**: en Vercel, pestaña **Storage**, conecta Supabase al proyecto. Después entra a Supabase → **SQL Editor** → **New query**, pega el contenido de `supabase.sql` y aprieta **Run**. Eso crea la tabla donde se guarda el pacto.
+   - **Upstash (Redis)**: en Vercel, pestaña **Storage**, crea una base Upstash Redis gratis y conéctala al proyecto. No hay que hacer nada más.
+4. Ve a **Deployments**, abre el último y elige **Redeploy** para que tome las variables nuevas.
 5. Abre la página, pon los nombres de los dos y elige quién eres. Tu polo abre el mismo link en su teléfono y elige su nombre.
+
+Si la página sigue diciendo «Modo local», el aviso muestra el motivo exacto. También puedes abrir `tu-pagina.vercel.app/api/state` en el navegador para ver la respuesta de la base de datos.
 
 Tip: en el teléfono, “Compartir → Agregar a pantalla de inicio” la deja como una app.
 
