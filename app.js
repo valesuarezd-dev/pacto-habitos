@@ -42,9 +42,9 @@ const shortLabel = (d) => (d < 30 ? `${d} días` : daysLabel(d));
 /* ---------- estado inicial ---------- */
 function defaultState() {
   return {
-    setupDone: false,
+    setupDone: true,
     title: 'Nuestro pacto',
-    people: { a: { name: 'Yo' }, b: { name: 'Mi polo' } },
+    people: { a: { name: 'Valukis' }, b: { name: 'Tomilin' } },
     settings: {
       milestones: [
         { days: 7, name: 'Detallito', idea: 'Un chocolate, una carta o su snack favorito' },
@@ -77,6 +77,7 @@ function defaultState() {
 function migrate(s) {
   const d = defaultState();
   if (!s || typeof s !== 'object') return d;
+  if (!s.setupDone) { s = { ...s, setupDone: true, people: d.people }; }
   const settings = { ...d.settings, ...(s.settings || {}) };
   if (!Array.isArray(settings.milestones) || !settings.milestones.length) settings.milestones = d.settings.milestones;
   if (!Array.isArray(settings.punishments)) settings.punishments = d.settings.punishments;
@@ -95,7 +96,6 @@ function migrate(s) {
 let state = null;
 let version = 0;
 let mode = 'remote';
-let localReason = '';
 let me = null;
 let queue = Promise.resolve();
 let saving = 0;
@@ -226,7 +226,7 @@ function pinHeaders() {
 
 function setSync(s) {
   const el = $('#sync');
-  const text = { ok: 'Sincronizado', saving: 'Guardando…', error: 'Sin guardar', offline: 'Sin conexión', local: 'Solo en este teléfono' }[s] || '';
+  const text = { ok: 'Sincronizado', saving: 'Guardando…', error: 'Sin guardar', offline: 'Sin conexión', }[s] || '';
   el.textContent = text;
   el.classList.toggle('is-error', s === 'error' || s === 'offline');
 }
@@ -238,6 +238,7 @@ async function load() {
     if (!r.ok) {
       let msg = '';
       try { msg = (await r.json()).message || ''; } catch { /* no era JSON */ }
+      if (!msg && r.status === 404) msg = 'No se encontró la API. Revisa que el archivo state.js esté dentro de una carpeta llamada api en GitHub, y que estés abriendo el link de Vercel.';
       throw new Error(msg || `La API respondió ${r.status}.`);
     }
     const data = await r.json();
@@ -246,14 +247,20 @@ async function load() {
     version = Number(data.version) || 0;
     setSync('ok');
   } catch (e) {
-    mode = 'local';
-    localReason = location.protocol === 'file:' ? '' : e?.message || '';
-    let saved = null;
-    try { saved = JSON.parse(lsGet(K.state) || 'null'); } catch { saved = null; }
-    state = migrate(saved);
-    setSync('local');
+    showOffline(location.protocol === 'file:'
+      ? 'Estás abriendo el archivo directo desde el computador. Abre la página desde tu link de Vercel.'
+      : e?.message === 'Failed to fetch' || e?.name === 'TypeError'
+        ? 'No hay conexión con el servidor. Revisa el internet o que estés usando el link de Vercel.'
+        : e?.message || 'Error desconocido.');
+    return false;
   }
   return true;
+}
+
+function showOffline(reason) {
+  $('#offline-reason').textContent = reason;
+  $('#offline').hidden = false;
+  $('#app').hidden = true;
 }
 
 async function refresh(force = false) {
@@ -276,14 +283,6 @@ async function refresh(force = false) {
 // Aplica un cambio. Si el otro teléfono guardó antes, se trae su versión y se vuelve a aplicar el cambio encima.
 function mutate(fn) {
   const run = async () => {
-    if (mode === 'local') {
-      const draft = structuredClone(state);
-      fn(draft);
-      state = draft;
-      lsSet(K.state, JSON.stringify(state));
-      render();
-      return true;
-    }
     saving++;
     setSync('saving');
     try {
@@ -388,8 +387,6 @@ function render() {
   document.title = state.title;
   $('#title').textContent = state.title;
   $('#couple').textContent = `${nameOf('a')} y ${nameOf('b')}`;
-  $('#local-banner').hidden = mode !== 'local';
-  $('#local-reason').textContent = localReason ? `Motivo: ${localReason}` : '';
   renderMe();
   renderPaths();
   renderHabits();
@@ -399,9 +396,12 @@ function render() {
 }
 
 function renderMe() {
-  $('#me-switch').innerHTML = ['a', 'b']
-    .map((p) => `<button class="seg p-${p}" data-action="set-me" data-p="${p}" aria-pressed="${me === p}">Soy ${esc(nameOf(p))}</button>`)
-    .join('');
+  const el = $('#profile');
+  if (!me) { el.innerHTML = ''; return; }
+  el.className = `profile p-${me}`;
+  el.innerHTML = `<span class="profile-dot" aria-hidden="true">${esc(nameOf(me).trim().charAt(0).toUpperCase())}</span>
+    <span>Perfil de <strong>${esc(nameOf(me))}</strong> en este teléfono</span>
+    <button class="link-btn" data-action="who">Cambiar</button>`;
 }
 
 function renderPaths() {
@@ -450,7 +450,7 @@ function pathHTML(p, pr) {
   const rateText = pr.activeNow > 1 ? `, avanza ×${fmtNum(pr.rate)} por día con ${pr.activeNow} hábitos` : '';
 
   return `<div class="path p-${p}">
-    <div class="path-head"><h3>${esc(name)}</h3><p>${fmtNum(pr.points)} días de progreso${rateText}</p></div>
+    <div class="path-head"><h3>${esc(name)}</h3><p>${fmtNum(pr.points)} ${pr.points === 1 ? 'día' : 'días'} de progreso${rateText}</p></div>
     <div class="track" role="img" aria-label="${esc(`${name}: ${fmtNum(pr.points)} días de progreso`)}">
       <div class="rail"><div class="fill" style="width:${mpos.toFixed(2)}%"></div></div>
       ${gifts}
@@ -615,30 +615,16 @@ function toast(msg) {
   toastTimer = setTimeout(() => el.classList.remove('show'), 3200);
 }
 
-function openSetup() {
-  dlg.dataset.locked = '1';
-  openDialog(`
-    <form data-form="setup">
-      <h2>Armemos el pacto</h2>
-      <p class="dlg-lead">Esto se hace una sola vez. Después cada uno elige quién es en su teléfono.</p>
-      <label class="field"><span>Nombre de la primera persona</span><input type="text" name="a" required maxlength="24" autofocus></label>
-      <label class="field"><span>Nombre de la segunda persona</span><input type="text" name="b" required maxlength="24"></label>
-      <fieldset class="field"><legend>¿Quién está usando este teléfono?</legend>
-        <label class="radio"><input type="radio" name="me" value="a" checked><span>La primera persona</span></label>
-        <label class="radio"><input type="radio" name="me" value="b"><span>La segunda persona</span></label>
-      </fieldset>
-      <div class="dlg-actions"><button class="btn primary" type="submit">Empezar</button></div>
-    </form>`);
-}
-
 function openWhoAmI() {
-  dlg.dataset.locked = '1';
+  const first = !me;
+  if (first) dlg.dataset.locked = '1';
   openDialog(`
-    <h2>¿Quién eres?</h2>
-    <p class="dlg-lead">Lo recordamos en este teléfono para mostrarte primero tus hábitos.</p>
+    <h2>${first ? '¿De quién es este teléfono?' : 'Cambiar de perfil'}</h2>
+    <p class="dlg-lead">Queda guardado en este teléfono: vas a ver tus hábitos primero y solo vas a poder marcar los tuyos. Cada uno elige su nombre en su propio celular.</p>
     <div class="manage-actions">
       ${['a', 'b'].map((p) => `<button class="btn p-${p}" data-action="set-me" data-p="${p}" data-close="1">Soy ${esc(nameOf(p))}</button>`).join('')}
-    </div>`);
+    </div>
+    ${first ? '' : '<div class="dlg-actions"><button class="btn" data-action="close">Cancelar</button></div>'}`);
 }
 
 function askPin() {
@@ -981,6 +967,8 @@ const actions = {
     if (dlg.querySelectorAll('.ms-row').length <= 1) return toast('Deja al menos un regalo.');
     el.closest('.ms-row').remove();
   },
+  who: () => openWhoAmI(),
+  retry: () => location.reload(),
   'set-me': (d) => {
     me = d.p;
     lsSet(K.me, me);
@@ -990,21 +978,6 @@ const actions = {
 };
 
 const forms = {
-  setup(fd) {
-    const a = String(fd.get('a')).trim();
-    const b = String(fd.get('b')).trim();
-    if (!a || !b) return;
-    me = fd.get('me') === 'b' ? 'b' : 'a';
-    lsSet(K.me, me);
-    mutate((s) => {
-      s.people.a.name = a;
-      s.people.b.name = b;
-      s.setupDone = true;
-      addLog(s, `${a} y ${b} empezaron el pacto.`);
-    });
-    delete dlg.dataset.locked;
-    closeDialog();
-  },
   pin(fd) {
     lsSet(K.pin, String(fd.get('pin')));
     location.reload();
@@ -1104,8 +1077,7 @@ async function start() {
   const ok = await load();
   if (!ok) return;
   render();
-  if (!state.setupDone) openSetup();
-  else if (!me) openWhoAmI();
+  if (!me) openWhoAmI();
 
   setInterval(() => {
     if (today() !== lastDay) render();

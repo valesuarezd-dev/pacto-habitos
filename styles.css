@@ -42,6 +42,7 @@
 *, *::before, *::after { box-sizing: inherit; }
 
 html { -webkit-text-size-adjust: 100%; }
+[hidden] { display: none !important; }
 
 body {
   margin: 0;
@@ -76,33 +77,28 @@ section { margin-top: 36px; }
 .sync { font-size: 0.8125rem; color: var(--muted); }
 .sync.is-error { color: var(--danger); }
 
-.me-switch {
-  display: inline-flex;
-  margin-top: 18px;
-  padding: 4px;
-  background: var(--surface-2);
-  border-radius: 999px;
-  gap: 2px;
-}
-.seg {
-  border: 0;
-  background: transparent;
-  color: var(--muted);
-  font: 600 0.9375rem var(--body);
-  padding: 8px 16px;
-  border-radius: 999px;
-  cursor: pointer;
-}
-.seg[aria-pressed="true"] { background: var(--pc); color: #fff; }
-
-.banner-reason { display: block; margin-top: 6px; font-weight: 600; }
-.banner {
+.profile {
+  display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
   margin-top: 16px;
-  padding: 12px 14px;
-  border-radius: 12px;
-  background: var(--surface-2);
-  font-size: 0.9375rem;
+  font-size: 0.9375rem; color: var(--muted);
 }
+.profile strong { color: var(--pc); }
+.profile-dot {
+  width: 30px; height: 30px; border-radius: 50%;
+  display: grid; place-items: center;
+  background: var(--pc); color: #fff; font-weight: 700;
+}
+.link-btn {
+  border: 0; background: none; padding: 4px 2px;
+  font: 600 0.9375rem var(--body); color: var(--ink);
+  text-decoration: underline; text-underline-offset: 3px; cursor: pointer;
+}
+
+.offline { min-height: 100vh; display: grid; place-items: center; padding: 24px 16px; }
+.offline-card { max-width: 460px; }
+.offline-card h1 { font-size: 2rem; margin-bottom: 12px; }
+.offline-card p { margin-bottom: 12px; }
+.offline-reason { padding: 12px 14px; border-radius: 12px; background: var(--surface-2); font-weight: 600; }
 
 /* ---------- Botones ---------- */
 .btn {
@@ -447,3 +443,5 @@ input:focus, textarea:focus { border-color: var(--ink); outline: none; }
   *, *::before, *::after { animation: none !important; transition: none !important; }
   .celebrate .big-gift .lid { transform: translate(-4px, -18px) rotate(-14deg); }
 }
+
+.manage-actions .btn.p-a, .manage-actions .btn.p-b { color: var(--pc); border-color: var(--pc); font-size: 1.0625rem; padding: 12px 16px; }

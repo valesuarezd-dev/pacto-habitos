@@ -24,19 +24,15 @@ No hay que instalar nada ni compilar nada.
    - **Supabase**: en Vercel, pestaña **Storage**, conecta Supabase al proyecto. Después entra a Supabase → **SQL Editor** → **New query**, pega el contenido de `supabase.sql` y aprieta **Run**. Eso crea la tabla donde se guarda el pacto.
    - **Upstash (Redis)**: en Vercel, pestaña **Storage**, crea una base Upstash Redis gratis y conéctala al proyecto. No hay que hacer nada más.
 4. Ve a **Deployments**, abre el último y elige **Redeploy** para que tome las variables nuevas.
-5. Abre la página, pon los nombres de los dos y elige quién eres. Tu polo abre el mismo link en su teléfono y elige su nombre.
+5. Abre el link en tu celular y elige «Soy Valukis». Tomilin abre el mismo link en su celular y elige «Soy Tomilin». Cada teléfono recuerda su perfil (se puede cambiar con «Cambiar», arriba).
 
-Si la página sigue diciendo «Modo local», el aviso muestra el motivo exacto. También puedes abrir `tu-pagina.vercel.app/api/state` en el navegador para ver la respuesta de la base de datos.
+Si algo no está bien conectado, la página muestra «No se pudo conectar» con el motivo exacto. También puedes abrir `tu-pagina.vercel.app/api/state` en el navegador para ver la respuesta de la base de datos.
 
 Tip: en el teléfono, “Compartir → Agregar a pantalla de inicio” la deja como una app.
 
 ### Código para que nadie más la toque (opcional)
 
 Cualquiera con el link podría abrirla. Si quieres protegerla, en Vercel ve a **Settings → Environment Variables**, agrega `APP_PIN` con un código (por ejemplo `2611`) y vuelve a hacer Redeploy. La página va a pedir el código una vez en cada teléfono.
-
-### Si no conectas la base de datos
-
-La página funciona igual, pero en “modo local”: cada teléfono guarda sus propios datos y no se comparten. Arriba aparece un aviso cuando está así.
 
 ## Cómo funciona el pacto
 

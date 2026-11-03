@@ -15,7 +15,16 @@
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-  <div class="wrap">
+  <div id="offline" class="offline" hidden>
+    <div class="offline-card">
+      <h1>No se pudo conectar</h1>
+      <p>La página necesita la base de datos para que los dos vean lo mismo, así que no guarda nada hasta que se conecte.</p>
+      <p class="offline-reason" id="offline-reason"></p>
+      <button class="btn primary" data-action="retry">Reintentar</button>
+    </div>
+  </div>
+
+  <div class="wrap" id="app">
     <header class="top">
       <div>
         <h1 id="title">Nuestro pacto</h1>
@@ -29,12 +38,8 @@
       </div>
     </header>
 
-    <div id="me-switch" class="me-switch" role="group" aria-label="¿Quién eres en este teléfono?"></div>
+    <p id="profile" class="profile"></p>
 
-    <p id="local-banner" class="banner" hidden>
-      Modo local: los datos se guardan solo en este navegador. Para compartirlos entre los dos teléfonos, conecta la base de datos en Vercel (está explicado en el README).
-      <strong id="local-reason" class="banner-reason"></strong>
-    </p>
 
     <section class="paths" aria-labelledby="paths-h">
       <h2 id="paths-h">Camino de regalos</h2>
